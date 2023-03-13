@@ -1,0 +1,203 @@
+public static class Prim {
+    private List<Vertex> graph;
+
+    public Prim(List<Vertex> graph) {
+        this.graph = graph;
+    }
+
+    public void run() {
+        if (graph.size() > 0) {
+            graph.get(0).setVisited(true);
+        }
+        while (isDisconnected()) {
+            Edge nextMinimum = new Edge(Integer.MAX_VALUE);
+            Vertex nextVertex = graph.get(0);
+            for (Vertex vertex : graph) {
+                if (vertex.isVisited()) {
+                    Pair candidate = vertex.nextMinimum();
+                    if (candidate.edge.getWeight() < nextMinimum.getWeight()) {
+                        nextMinimum = candidate.edge;
+                        nextVertex = candidate.vertex;
+                    }
+                }
+            }
+            nextMinimum.setIncluded(true);
+            nextVertex.setVisited(true);
+        }
+    }
+
+    private boolean isDisconnected() {
+        for (Vertex vertex : graph) {
+            if (!vertex.isVisited()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String originalGraphToString() {
+        StringBuilder sb = new StringBuilder();
+        for (Vertex vertex : graph) {
+            sb.append(vertex.originalToString());
+        }
+        return sb.toString();
+    }
+
+    public void resetPrintHistory() {
+        for (Vertex vertex : graph) {
+            Iterator<Map.Entry<Vertex, Edge>> it = vertex.getEdges().entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Vertex, Edge> pair = it.next();
+                pair.getValue().setPrinted(false);
+            }
+        }
+    }
+
+    public String minimumSpanningTreeToString() {
+        StringBuilder sb = new StringBuilder();
+        for (Vertex vertex : graph) {
+            sb.append(vertex.includedToString());
+        }
+        return sb.toString();
+    }
+
+
+    public static class Vertex {
+
+        private String label = null;
+        private Map<Vertex, Edge> edges = new HashMap<>();
+        private boolean isVisited = false;
+
+        public Vertex(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public Map<Vertex, Edge> getEdges() {
+            return edges;
+        }
+
+        public void addEdge(Vertex vertex, Edge edge) {
+            if (this.edges.containsKey(vertex)) {
+                if (edge.getWeight() < this.edges.get(vertex).getWeight()) {
+                    this.edges.replace(vertex, edge);
+                }
+            } else {
+                this.edges.put(vertex, edge);
+            }
+        }
+
+        public boolean isVisited() {
+            return isVisited;
+        }
+
+        public void setVisited(boolean visited) {
+            isVisited = visited;
+        }
+
+        public Pair nextMinimum() {
+            Edge nextMinimum = new Edge(Integer.MAX_VALUE);
+            Vertex nextVertex = this;
+            Iterator<Map.Entry<Vertex, Edge>> it = edges.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Vertex, Edge> pair = it.next();
+                if (!pair.getKey().isVisited()) {
+                    if (!pair.getValue().isIncluded()) {
+                        if (pair.getValue().getWeight() < nextMinimum.getWeight()) {
+                            nextMinimum = pair.getValue();
+                            nextVertex = pair.getKey();
+                        }
+                    }
+                }
+            }
+            return new Pair(nextVertex, nextMinimum);
+        }
+
+        public String originalToString() {
+            StringBuilder sb = new StringBuilder();
+            Iterator<Map.Entry<Vertex, Edge>> it = edges.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Vertex, Edge> pair = it.next();
+                if (!pair.getValue().isPrinted()) {
+                    sb.append(getLabel());
+                    sb.append(" --- ");
+                    sb.append(pair.getValue().getWeight());
+                    sb.append(" --- ");
+                    sb.append(pair.getKey().getLabel());
+                    sb.append("\n");
+                    pair.getValue().setPrinted(true);
+                }
+            }
+            return sb.toString();
+        }
+
+        public String includedToString() {
+            StringBuilder sb = new StringBuilder();
+            if (isVisited()) {
+                Iterator<Map.Entry<Vertex, Edge>> it = edges.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<Vertex, Edge> pair = it.next();
+                    if (pair.getValue().isIncluded()) {
+                        if (!pair.getValue().isPrinted()) {
+                            sb.append(getLabel());
+                            sb.append(" --- ");
+                            sb.append(pair.getValue().getWeight());
+                            sb.append(" --- ");
+                            sb.append(pair.getKey().getLabel());
+                            sb.append("\n");
+                            pair.getValue().setPrinted(true);
+                        }
+                    }
+                }
+            }
+            return sb.toString();
+        }
+
+    }
+
+    public static class Edge {
+        private int weight;
+        private boolean isIncluded = false;
+        private boolean isPrinted = false;
+
+        public Edge(int weight) {
+            this.weight = weight;
+        }
+
+        public int getWeight() {
+            return weight;
+        }
+
+        public void setWeight(int weight) {
+            this.weight = weight;
+        }
+
+        public boolean isIncluded() {
+            return isIncluded;
+        }
+
+        public void setIncluded(boolean included) {
+            isIncluded = included;
+        }
+
+        public boolean isPrinted() {
+            return isPrinted;
+        }
+
+        public void setPrinted(boolean printed) {
+            isPrinted = printed;
+        }
+
+    }
+
+    private record Pair(Vertex vertex, Edge edge) {
+    }
+
+}
